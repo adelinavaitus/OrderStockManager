@@ -1,2 +1,4 @@
 /src/main/resources/application.properties
 target/
+stocks_new/
+stocks_processed/
