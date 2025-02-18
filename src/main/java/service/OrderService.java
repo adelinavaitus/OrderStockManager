@@ -33,18 +33,29 @@ public class OrderService {
     }
 
     private void saveOrderToDatabase(Order order){
-        String sql = "INSERT INTO orders (id, name, client, status) VALUES (?, ?, ?, ?)";
+        String insertOrderSQL = "INSERT INTO orders (id, name, client, status) VALUES (?, ?, ?, ?)";
+        String insertOrderProductSQL = "INSERT INTO order_products (order_id, product_id, quantity) VALUES (?, ?, ?)";
 
         try (Connection dbConnection = DatabaseManager.getConnection();
-             PreparedStatement preparedStatement = dbConnection.prepareStatement(sql)) {
-            
-            preparedStatement.setInt(1, order.getId());
-            preparedStatement.setString(2, order.toString());
-            preparedStatement.setString(3, order.getClient());
-            preparedStatement.setString(4, (checkStockForOrder(order) ? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS).toString());
+             PreparedStatement orderStatement = dbConnection.prepareStatement(insertOrderSQL);
+             PreparedStatement orderProductStatement = dbConnection.prepareStatement(insertOrderProductSQL)) {
 
-            preparedStatement.executeUpdate();
-            System.out.println("Order saved to database " + order);
+            orderStatement.setInt(1, order.getId());
+            orderStatement.setString(2, order.toString());
+            orderStatement.setString(3, order.getClient());
+            orderStatement.setString(4, (checkStockForOrder(order) ? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS).toString());
+
+            orderStatement.executeUpdate();
+
+            for(Product product: order.getProducts()){
+                orderProductStatement.setInt(1, order.getId());
+                orderProductStatement.setInt(2, product.getId());
+                orderProductStatement.setInt(3, product.getStock());
+
+                orderProductStatement.executeUpdate();
+            }
+
+            System.out.println("Order and products saved to database. Order id:  " + order.getId());
         }catch (Exception e){
             System.out.println("Error saving order to database " + e.getMessage());
             e.printStackTrace();
