@@ -1,0 +1,77 @@
+package service;
+
+import database.DatabaseManager;
+import models.Order;
+import models.OrderResponse;
+import models.OrderStatus;
+import models.Product;
+import rabbitmq.OrderResponseProducer;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+public class OrderService {
+
+    public void processOrder(Order order){
+        saveOrderToDatabase(order);
+
+        boolean isStockAvailable = checkStockForOrder(order);
+
+        OrderResponse orderResponse = new OrderResponse();
+        orderResponse.setOrderId((order.getId()));
+        orderResponse.setStatus(isStockAvailable? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS);
+
+        OrderResponseProducer.sendResponse(orderResponse);
+    }
+
+    private void saveOrderToDatabase(Order order){
+        String sql = "INSERT INTO orders (id, name, client, status) VALUES (?, ?, ?, ?)";
+
+        try (Connection dbConnection = DatabaseManager.getConnection();
+             PreparedStatement preparedStatement = dbConnection.prepareStatement(sql)) {
+            
+            preparedStatement.setInt(1, order.getId());
+            preparedStatement.setString(2, order.toString());
+            preparedStatement.setString(3, order.getClient());
+            preparedStatement.setString(4, (checkStockForOrder(order) ? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS).toString());
+
+            preparedStatement.executeUpdate();
+            System.out.println("Order saved to database " + order);
+        }catch (Exception e){
+            System.out.println("Error saving order to database " + e.getMessage());
+            e.printStackTrace();
+        }
+
+    }
+
+    private boolean checkStockForOrder(Order order){
+        try(Connection dbConnection = DatabaseManager.getConnection()){
+            for(Product product: order.getProducts()){
+                if(!isStockSufficient(dbConnection, product)){
+                    return false;
+                }
+            }
+            return true;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean isStockSufficient(Connection dbConnection, Product product){
+        String sql = "SELECT stock FROM products WHERE id = ?";
+
+        try(PreparedStatement preparedStatement = dbConnection.prepareStatement(sql)){
+            preparedStatement.setInt(1, product.getId());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                int availableStock = resultSet.getInt("stock");
+                return availableStock >= product.getStock();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+}
