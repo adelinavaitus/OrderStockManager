@@ -6,13 +6,12 @@ public class Order {
     private int id;
     private String client;
     private List<Product> products;
-    private OrderStatus status;
 
-    public Order(int id, String client, List<Product> products, OrderStatus status){
+    public Order() {}
+    public Order(int id, String client, List<Product> products){
         this.id = id;
         this.client = client;
         this.products = products;
-        this.status = status;
     }
 
     public int getId(){
@@ -25,9 +24,5 @@ public class Order {
 
     public List<Product> getProducts(){
         return this.products;
-    }
-
-    public OrderStatus getStatus(){
-        return this.status;
     }
 }
