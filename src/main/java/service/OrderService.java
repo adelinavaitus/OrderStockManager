@@ -20,7 +20,14 @@ public class OrderService {
 
         OrderResponse orderResponse = new OrderResponse();
         orderResponse.setOrderId((order.getId()));
-        orderResponse.setStatus(isStockAvailable? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS);
+
+        if(isStockAvailable){
+            orderResponse.setStatus(OrderStatus.RESERVED);
+            updateStock(order);
+        }
+        else{
+            orderResponse.setStatus(OrderStatus.INSUFFICIENT_STOCKS);
+        }
 
         OrderResponseProducer.sendResponse(orderResponse);
     }
@@ -73,5 +80,21 @@ public class OrderService {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private void updateStock(Order order){
+        String sql = "UPDATE products SET stock = stock - ? WHERE id = ?";
+
+        try(Connection dbConnection = DatabaseManager.getConnection();
+            PreparedStatement preparedStatement1 = dbConnection.prepareStatement(sql)){
+
+            for(Product product: order.getProducts()){
+                preparedStatement1.setInt(1, product.getStock());
+                preparedStatement1.setInt(2, product.getId());
+                preparedStatement1.executeUpdate();
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
