@@ -4,6 +4,7 @@ import database.DatabaseManager;
 import models.Product;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import utils.ConfigLoader;
 
@@ -51,7 +52,14 @@ public class StockFileProcessor {
             for (int i = 0; i < productNodes.getLength(); i++) {
                 Element element = (Element) productNodes.item(i);
                 int id = Integer.parseInt(element.getElementsByTagName("product_id").item(0).getTextContent());
-                String name = element.getElementsByTagName("name").item(0).getTextContent();
+
+                // It is unclear from the documentation whether the product name will be present in the XML.
+                // If <name> is missing or empty, fallback to using product_id as the name.
+                Node nameNode = element.getElementsByTagName("name").item(0);
+                String name = (nameNode != null && nameNode.getTextContent().trim().length() > 0)
+                        ? nameNode.getTextContent()
+                        : String.valueOf(id);
+
                 int stock = Integer.parseInt(element.getElementsByTagName("quantity").item(0).getTextContent());
 
                 products.add(new Product(id, name, stock));
@@ -66,7 +74,7 @@ public class StockFileProcessor {
     private static void updateStockInDatabase(List<Product> products){
         try (Connection connection = DatabaseManager.getConnection()) {
             String sql = "INSERT INTO products (id, name, stock) VALUES (?, ?, ?) " +
-                    "ON DUPLICATE KEY UPDATE stock = stock + VALUES(stock)";
+                    "ON DUPLICATE KEY UPDATE name=VALUES(name), stock = stock + VALUES(stock)";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 for (Product product : products) {
                     statement.setInt(1, product.getId());
