@@ -1,9 +1,15 @@
 package models;
 
+import javax.xml.bind.annotation.XmlElement;
+
 public class Product {
 
+    @XmlElement(name = "product_id")
     private int id;
+
     private String name;
+
+    @XmlElement(name = "quantity")
     private int stock;
 
     public Product() {}
