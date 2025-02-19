@@ -34,4 +34,8 @@ public class Order {
     public List<Product> getProducts(){
         return this.products;
     }
+
+    public void setId(int id){
+        this.id = id;
+    }
 }

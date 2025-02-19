@@ -45,15 +45,14 @@ public class OrderService {
             orderStatement.executeUpdate();
 
             ResultSet generatedKeys = orderStatement.getGeneratedKeys();
-            int orderId;
             if(generatedKeys.next()){
-                orderId = generatedKeys.getInt(1);
+                order.setId(generatedKeys.getInt(1));
             } else {
                 throw new SQLException("Creating order failed, no ID obtained");
             }
 
             for(Product product: order.getProducts()){
-                orderProductStatement.setInt(1, orderId);
+                orderProductStatement.setInt(1, order.getId());
                 orderProductStatement.setInt(2, product.getId());
                 orderProductStatement.setInt(3, product.getStock());
 
