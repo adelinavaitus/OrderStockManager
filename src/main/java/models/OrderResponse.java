@@ -2,6 +2,7 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+// Represents the response for an order, including its status and any error message
 public class OrderResponse {
 
     @JsonProperty("order_id")

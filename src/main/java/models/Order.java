@@ -1,10 +1,9 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-
 import java.util.List;
 
+// Represents an order with its ID, client, and associated products
 public class Order {
 
     @JsonProperty("order_id")

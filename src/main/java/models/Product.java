@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 
+// Represents a product with its ID, name, and stock quantity
 public class Product {
 
     @XmlElement(name = "product_id")

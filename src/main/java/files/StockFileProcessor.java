@@ -19,6 +19,7 @@ import java.util.List;
 
 public class StockFileProcessor {
 
+    // Processes all XML stock files found in the input directory
     public static void processStockFiles() {
         String inputPath = ConfigLoader.getProperty("stocks.input.path");
         String processedPath = ConfigLoader.getProperty("stocks.processed.path");
@@ -26,11 +27,13 @@ public class StockFileProcessor {
         File inputDir = new File(inputPath);
         File[] files = inputDir.listFiles((dir, name) -> name.endsWith(".xml"));
 
+        // Checks if there are any XML files to process
         if (files == null || files.length == 0) {
             System.out.println("There are no XML files to process.");
             return;
         }
 
+        // Iterates through each XML file, parsing and updating the database
         for (File file : files) {
             List<Product> products = parseStockFile(file);
             if (!products.isEmpty()) {
@@ -40,6 +43,7 @@ public class StockFileProcessor {
         }
     }
 
+    // Parses an XML stock file and extracts product data
     private static List<Product> parseStockFile(File file) {
         List<Product> products = new ArrayList<>();
 
@@ -49,6 +53,8 @@ public class StockFileProcessor {
             doc.getDocumentElement().normalize();
 
             NodeList productNodes = doc.getElementsByTagName("stock");
+
+            // Extracts product details from each stock entry
             for (int i = 0; i < productNodes.getLength(); i++) {
                 Element element = (Element) productNodes.item(i);
                 int id = Integer.parseInt(element.getElementsByTagName("product_id").item(0).getTextContent());
@@ -67,14 +73,15 @@ public class StockFileProcessor {
         } catch (Exception e){
             e.printStackTrace();
         }
-
         return products;
     }
 
+    // Updates the stock information in the database
     private static void updateStockInDatabase(List<Product> products){
         try (Connection connection = DatabaseManager.getConnection()) {
             String sql = "INSERT INTO products (id, name, stock) VALUES (?, ?, ?) " +
                     "ON DUPLICATE KEY UPDATE name=VALUES(name), stock = stock + VALUES(stock)";
+
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 for (Product product : products) {
                     statement.setInt(1, product.getId());
@@ -90,6 +97,7 @@ public class StockFileProcessor {
         }
     }
 
+    // Moves processed XML files to a separate directory
     private static void moveProcessedFile(File file, String processedPath){
         File processedDir = new File(processedPath);
         if (!processedDir.exists()) {
