@@ -7,9 +7,7 @@ import models.OrderStatus;
 import models.Product;
 import rabbitmq.OrderResponseProducer;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 public class OrderService {
 
@@ -33,22 +31,29 @@ public class OrderService {
     }
 
     private void saveOrderToDatabase(Order order){
-        String insertOrderSQL = "INSERT INTO orders (id, name, client, status) VALUES (?, ?, ?, ?)";
+        String insertOrderSQL = "INSERT INTO orders ( name, client, status) VALUES (?, ?, ?)";
         String insertOrderProductSQL = "INSERT INTO order_products (order_id, product_id, quantity) VALUES (?, ?, ?)";
 
         try (Connection dbConnection = DatabaseManager.getConnection();
-             PreparedStatement orderStatement = dbConnection.prepareStatement(insertOrderSQL);
+             PreparedStatement orderStatement = dbConnection.prepareStatement(insertOrderSQL, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement orderProductStatement = dbConnection.prepareStatement(insertOrderProductSQL)) {
 
-            orderStatement.setInt(1, order.getId());
-            orderStatement.setString(2, order.toString());
-            orderStatement.setString(3, order.getClient());
-            orderStatement.setString(4, (checkStockForOrder(order) ? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS).toString());
+            orderStatement.setString(1, order.toString());
+            orderStatement.setString(2, order.getClient());
+            orderStatement.setString(3, (checkStockForOrder(order) ? OrderStatus.RESERVED : OrderStatus.INSUFFICIENT_STOCKS).toString());
 
             orderStatement.executeUpdate();
 
+            ResultSet generatedKeys = orderStatement.getGeneratedKeys();
+            int orderId;
+            if(generatedKeys.next()){
+                orderId = generatedKeys.getInt(1);
+            } else {
+                throw new SQLException("Creating order failed, no ID obtained");
+            }
+
             for(Product product: order.getProducts()){
-                orderProductStatement.setInt(1, order.getId());
+                orderProductStatement.setInt(1, orderId);
                 orderProductStatement.setInt(2, product.getId());
                 orderProductStatement.setInt(3, product.getStock());
 

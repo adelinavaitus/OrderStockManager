@@ -1,10 +1,19 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
 import java.util.List;
 
 public class Order {
+
+    @JsonProperty("order_id")
     private int id;
+
+    @JsonProperty("client_name")
     private String client;
+
+    @JsonProperty("items")
     private List<Product> products;
 
     public Order() {}

@@ -1,15 +1,19 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.xml.bind.annotation.XmlElement;
 
 public class Product {
 
     @XmlElement(name = "product_id")
+    @JsonProperty("product_id")
     private int id;
 
     private String name;
 
     @XmlElement(name = "quantity")
+    @JsonProperty("quantity")
     private int stock;
 
     public Product() {}

@@ -1,8 +1,16 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class OrderResponse {
+
+    @JsonProperty("order_id")
     private int orderId;
+
+    @JsonProperty("order_status")
     private OrderStatus status;
+
+    @JsonProperty("error_message")
     private String errorMessage;
 
     public int getOrderId(){
